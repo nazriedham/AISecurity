@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEGIS — Adaptive Network Intelligence Shield</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #030a0f;
+    --surface: #060f17;
+    --panel: #081520;
+    --border: #0d2d3f;
+    --border-glow: #0e7a9a;
+    --accent: #00d4ff;
+    --accent2: #00ff9d;
+    --warn: #ff9f0a;
+    --danger: #ff3b30;
+    --danger-dim: #3d0d0a;
+    --text: #c8e8f0;
+    --text-dim: #4a7a8a;
+    --text-bright: #e8f8ff;
+    --grid: rgba(0,212,255,0.04);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(0,50,80,0.3) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(0,30,60,0.25) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(6,15,23,0.95);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 900;
+    color: var(--accent);
+    box-shadow: 0 0 16px rgba(0,212,255,0.3), inset 0 0 8px rgba(0,212,255,0.1);
+    animation: pulse-border 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 16px rgba(0,212,255,0.3), inset 0 0 8px rgba(0,212,255,0.1); }
+    50% { box-shadow: 0 0 28px rgba(0,212,255,0.6), inset 0 0 14px rgba(0,212,255,0.2); }
+  }
+
+  .logo-text { font-family: 'Orbitron', monospace; }
+  .logo-name { font-size: 18px; font-weight: 900; color: var(--text-bright); letter-spacing: 3px; }
+  .logo-sub { font-size: 9px; color: var(--text-dim); letter-spacing: 4px; font-family: 'Share Tech Mono', monospace; }
+
+  .header-center {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .status-pill.active {
+    background: rgba(0,255,157,0.08);
+    border: 1px solid rgba(0,255,157,0.3);
+    color: var(--accent2);
+  }
+
+  .status-pill.learning {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.3);
+    color: var(--accent);
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  .dot.green { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .dot.blue { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .dot.red { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+  .dot.yellow { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .live-time { color: var(--accent); }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    grid-template-rows: auto;
+    gap: 1px;
+    flex: 1;
+    background: var(--border);
+  }
+
+  .panel {
+    background: var(--panel);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 10px;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+  }
+
+  /* LEFT SIDEBAR */
+  .sidebar-left {
+    grid-row: span 3;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .threat-score-panel {
+    background: var(--panel);
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  .threat-ring {
+    position: relative;
+    width: 130px; height: 130px;
+    margin: 10px auto 16px;
+  }
+
+  .threat-ring svg { transform: rotate(-90deg); }
+
+  .threat-ring-val {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .threat-num {
+    font-family: 'Orbitron', monospace;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--accent2);
+    text-shadow: 0 0 20px var(--accent2);
+    line-height: 1;
+  }
+
+  .threat-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .threat-status {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .threat-desc { font-size: 11px; color: var(--text-dim); }
+
+  /* Stat rows */
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(13,45,63,0.6);
+    font-size: 12px;
+  }
+
+  .stat-row:last-child { border-bottom: none; }
+
+  .stat-key { color: var(--text-dim); font-family: 'Share Tech Mono', monospace; font-size: 10px; }
+  .stat-val { color: var(--text-bright); font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700; }
+  .stat-val.green { color: var(--accent2); }
+  .stat-val.blue { color: var(--accent); }
+  .stat-val.red { color: var(--danger); }
+  .stat-val.warn { color: var(--warn); }
+
+  /* AI LEARNING PANEL */
+  .ai-learn-panel {
+    background: var(--panel);
+    padding: 16px;
+  }
+
+  .learn-bar-wrap {
+    margin: 8px 0;
+  }
+
+  .learn-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 4px;
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .learn-bar-label span:last-child { color: var(--accent); }
+
+  .learn-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .learn-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  .learn-bar-fill.blue { background: linear-gradient(90deg, #0066ff, var(--accent)); box-shadow: 0 0 6px var(--accent); }
+  .learn-bar-fill.green { background: linear-gradient(90deg, #00aa66, var(--accent2)); box-shadow: 0 0 6px var(--accent2); }
+  .learn-bar-fill.warn { background: linear-gradient(90deg, #aa5500, var(--warn)); box-shadow: 0 0 6px var(--warn); }
+
+  /* CENTER TOP — Network Map */
+  .center-top {
+    grid-column: 2;
+    height: 320px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .network-canvas-wrap {
+    position: absolute;
+    inset: 0;
+  }
+
+  canvas#netCanvas {
+    width: 100%; height: 100%;
+  }
+
+  .net-overlay {
+    position: absolute;
+    top: 16px; left: 16px;
+    pointer-events: none;
+  }
+
+  /* CENTER MIDDLE — Traffic Chart */
+  .center-mid {
+    grid-column: 2;
+    height: 180px;
+  }
+
+  .traffic-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 110px;
+    padding: 0 4px;
+    margin-top: 8px;
+  }
+
+  .traffic-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .traffic-bar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.5s ease;
+    position: relative;
+  }
+
+  .traffic-bar.normal { background: linear-gradient(180deg, var(--accent) 0%, rgba(0,100,160,0.3) 100%); }
+  .traffic-bar.anomaly { background: linear-gradient(180deg, var(--danger) 0%, rgba(100,20,0,0.3) 100%); box-shadow: 0 0 8px var(--danger); }
+  .traffic-bar.warn { background: linear-gradient(180deg, var(--warn) 0%, rgba(100,50,0,0.3) 100%); }
+
+  .traffic-label { font-size: 8px; color: var(--text-dim); font-family: 'Share Tech Mono', monospace; }
+
+  /* CENTER BOTTOM — Alerts */
+  .center-bot {
+    grid-column: 2;
+  }
+
+  .alert-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .alert-feed::-webkit-scrollbar { width: 3px; }
+  .alert-feed::-webkit-scrollbar-track { background: transparent; }
+  .alert-feed::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 2px; }
+
+  .alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border-left: 3px solid;
+    font-size: 12px;
+    animation: slideIn 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .alert-item.critical {
+    background: rgba(255,59,48,0.07);
+    border-color: var(--danger);
+  }
+
+  .alert-item.warning {
+    background: rgba(255,159,10,0.07);
+    border-color: var(--warn);
+  }
+
+  .alert-item.info {
+    background: rgba(0,212,255,0.05);
+    border-color: var(--accent);
+  }
+
+  .alert-item.success {
+    background: rgba(0,255,157,0.05);
+    border-color: var(--accent2);
+  }
+
+  .alert-type {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    min-width: 60px;
+    margin-top: 1px;
+  }
+
+  .alert-item.critical .alert-type { color: var(--danger); }
+  .alert-item.warning .alert-type { color: var(--warn); }
+  .alert-item.info .alert-type { color: var(--accent); }
+  .alert-item.success .alert-type { color: var(--accent2); }
+
+  .alert-body { flex: 1; }
+  .alert-msg { color: var(--text); line-height: 1.4; }
+  .alert-meta { font-size: 10px; color: var(--text-dim); font-family: 'Share Tech Mono', monospace; margin-top: 2px; }
+
+  .alert-action {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    align-self: center;
+  }
+
+  .alert-action:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* RIGHT SIDEBAR */
+  .sidebar-right {
+    grid-row: span 3;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+  }
+
+  /* Protection modules */
+  .module-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .module-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.25s;
+    border-radius: 6px;
+  }
+
+  .module-card.on::before { background: rgba(0,255,157,0.04); opacity: 1; }
+  .module-card.warn-state::before { background: rgba(255,159,10,0.04); opacity: 1; }
+
+  .module-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .module-card.on { border-color: rgba(0,255,157,0.3); }
+  .module-card.warn-state { border-color: rgba(255,159,10,0.3); }
+
+  .module-icon {
+    font-size: 18px;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .module-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    line-height: 1.3;
+  }
+
+  .module-status {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .module-card.on .module-status { color: var(--accent2); }
+  .module-card.warn-state .module-status { color: var(--warn); }
+  .module-card:not(.on):not(.warn-state) .module-status { color: var(--text-dim); }
+
+  .toggle-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 24px; height: 14px;
+    background: var(--border);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .toggle-btn::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 10px; height: 10px;
+    background: var(--text-dim);
+    border-radius: 50%;
+    transition: all 0.3s;
+  }
+
+  .module-card.on .toggle-btn { background: rgba(0,255,157,0.3); }
+  .module-card.on .toggle-btn::after { left: 12px; background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+
+  /* Connection table */
+  .conn-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    margin-top: 8px;
+  }
+
+  .conn-table th {
+    text-align: left;
+    color: var(--text-dim);
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .conn-table td {
+    padding: 5px 6px;
+    border-bottom: 1px solid rgba(13,45,63,0.4);
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  .conn-table tr:hover td { background: rgba(0,212,255,0.03); }
+
+  .conn-flag {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+
+  .conn-flag.safe { background: var(--accent2); box-shadow: 0 0 4px var(--accent2); }
+  .conn-flag.suspicious { background: var(--warn); box-shadow: 0 0 4px var(--warn); }
+  .conn-flag.blocked { background: var(--danger); box-shadow: 0 0 4px var(--danger); }
+
+  /* AI Chat Panel */
+  .ai-chat-panel {
+    background: var(--panel);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .ai-chat-history {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+  }
+
+  .ai-chat-history::-webkit-scrollbar { width: 2px; }
+  .ai-chat-history::-webkit-scrollbar-thumb { background: var(--border-glow); }
+
+  .chat-msg {
+    font-size: 11px;
+    line-height: 1.5;
+    padding: 8px 10px;
+    border-radius: 6px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .chat-msg.user {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.15);
+    color: var(--accent);
+    align-self: flex-end;
+    max-width: 90%;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .chat-msg.ai {
+    background: rgba(0,255,157,0.05);
+    border: 1px solid rgba(0,255,157,0.1);
+    color: var(--text);
+    align-self: flex-start;
+    max-width: 95%;
+  }
+
+  .chat-msg.ai .ai-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    color: var(--accent2);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--text-dim); }
+
+  .chat-send {
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 7px 12px;
+    color: var(--accent);
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .chat-send:hover {
+    background: rgba(0,212,255,0.2);
+    box-shadow: 0 0 12px rgba(0,212,255,0.3);
+  }
+
+  /* Scanning line animation */
+  @keyframes scan {
+    0% { top: 0; }
+    100% { top: 100%; }
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,212,255,0.4), transparent);
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Geo world panel */
+  .geo-panel {
+    background: var(--panel);
+    padding: 16px;
+  }
+
+  .geo-dots {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Crect fill='%23060f17' width='800' height='400'/%3E%3Cg fill='%230d2d3f' stroke='none'%3E%3Cellipse cx='400' cy='200' rx='380' ry='190' fill='none' stroke='%230d2d3f' stroke-width='1'/%3E%3C/g%3E%3C/svg%3E") center/cover;
+    overflow: hidden;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    margin: 8px 0;
+  }
+
+  .attack-dot {
+    position: absolute;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--danger);
+    box-shadow: 0 0 8px var(--danger);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(2); opacity: 0.5; }
+  }
+
+  .source-dot {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 10px var(--accent2);
+  }
+
+  /* Counter stats at bottom */
+  .counter-row {
+    display: flex;
+    gap: 1px;
+    background: var(--border);
+    margin-top: 1px;
+  }
+
+  .counter-cell {
+    flex: 1;
+    background: var(--panel);
+    padding: 12px;
+    text-align: center;
+  }
+
+  .counter-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .counter-key {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .counter-cell:nth-child(1) .counter-val { color: var(--danger); text-shadow: 0 0 10px var(--danger); }
+  .counter-cell:nth-child(2) .counter-val { color: var(--warn); text-shadow: 0 0 10px var(--warn); }
+  .counter-cell:nth-child(3) .counter-val { color: var(--accent2); text-shadow: 0 0 10px var(--accent2); }
+  .counter-cell:nth-child(4) .counter-val { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+
+  /* Scrollbar global */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Loading pulse for AI thinking */
+  .typing-dots span {
+    display: inline-block;
+    width: 4px; height: 4px;
+    background: var(--accent2);
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: typing 1s ease-in-out infinite;
+  }
+
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(-4px); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">AE</div>
+      <div class="logo-text">
+        <div class="logo-name">AEGIS</div>
+        <div class="logo-sub">Adaptive Network Intelligence Shield</div>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="status-pill active"><div class="dot green"></div> SHIELD ACTIVE</div>
+      <div class="status-pill learning"><div class="dot blue"></div> AI LEARNING</div>
+    </div>
+    <div class="header-right">
+      <span>NODE: <span style="color:var(--accent)">NET-CORE-01</span></span>
+      <span>SESSION: <span style="color:var(--accent)">0x4F2A</span></span>
+      <span class="live-time" id="liveTime">--:--:--</span>
+    </div>
+  </header>
+
+  <!-- COUNTER ROW -->
+  <div class="counter-row">
+    <div class="counter-cell">
+      <div class="counter-val" id="cntBlocked">0</div>
+      <div class="counter-key">THREATS BLOCKED</div>
+    </div>
+    <div class="counter-cell">
+      <div class="counter-val" id="cntAnomaly">0</div>
+      <div class="counter-key">ANOMALIES</div>
+    </div>
+    <div class="counter-cell">
+      <div class="counter-val" id="cntClear">0</div>
+      <div class="counter-key">CLEARED</div>
+    </div>
+    <div class="counter-cell">
+      <div class="counter-val" id="cntPackets">0</div>
+      <div class="counter-key">PACKETS/S</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="sidebar-left">
+
+      <!-- Threat Score -->
+      <div class="threat-score-panel">
+        <div class="panel-title">THREAT LEVEL</div>
+        <div class="threat-ring">
+          <svg width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="56" fill="none" stroke="#0d2d3f" stroke-width="8"/>
+            <circle cx="65" cy="65" r="56" fill="none" stroke="#00ff9d" stroke-width="8"
+              stroke-dasharray="351.86" stroke-dashoffset="335" stroke-linecap="round"
+              style="filter:drop-shadow(0 0 6px #00ff9d)"
+              id="threatArc"/>
+          </svg>
+          <div class="threat-ring-val">
+            <span class="threat-num" id="threatScore">12</span>
+            <span class="threat-label">/ 100</span>
+          </div>
+        </div>
+        <div class="threat-status" id="threatStatusTxt">SECURE</div>
+        <div class="threat-desc" id="threatDescTxt">Network operating normally</div>
+      </div>
+
+      <!-- Stats -->
+      <div class="panel">
+        <div class="panel-title">NETWORK STATS</div>
+        <div class="stat-row">
+          <span class="stat-key">INBOUND</span>
+          <span class="stat-val blue" id="statIn">2.4 MB/s</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">OUTBOUND</span>
+          <span class="stat-val blue" id="statOut">0.8 MB/s</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">ACTIVE CONN</span>
+          <span class="stat-val" id="statConn">47</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">BLOCKED IPs</span>
+          <span class="stat-val red" id="statBlockedIP">13</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">ENDPOINTS</span>
+          <span class="stat-val green" id="statEndpoints">24/24</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-key">AI ACCURACY</span>
+          <span class="stat-val green" id="statAcc">98.7%</span>
+        </div>
+      </div>
+
+      <!-- AI Learning -->
+      <div class="ai-learn-panel">
+        <div class="panel-title">AI LEARNING MODEL</div>
+        <div class="learn-bar-wrap">
+          <div class="learn-bar-label"><span>Behavior Baseline</span><span id="lb1">94%</span></div>
+          <div class="learn-bar"><div class="learn-bar-fill blue" id="lbFill1" style="width:94%"></div></div>
+        </div>
+        <div class="learn-bar-wrap">
+          <div class="learn-bar-label"><span>Anomaly Detection</span><span id="lb2">87%</span></div>
+          <div class="learn-bar"><div class="learn-bar-fill green" id="lbFill2" style="width:87%"></div></div>
+        </div>
+        <div class="learn-bar-wrap">
+          <div class="learn-bar-label"><span>Threat Prediction</span><span id="lb3">79%</span></div>
+          <div class="learn-bar"><div class="learn-bar-fill warn" id="lbFill3" style="width:79%"></div></div>
+        </div>
+        <div class="learn-bar-wrap">
+          <div class="learn-bar-label"><span>Pattern Memory</span><span id="lb4">96%</span></div>
+          <div class="learn-bar"><div class="learn-bar-fill blue" id="lbFill4" style="width:96%"></div></div>
+        </div>
+        <div style="margin-top:10px; font-size:10px; color:var(--text-dim); font-family:'Share Tech Mono',monospace; line-height:1.6;">
+          <span style="color:var(--accent2)">▲ LEARNING:</span> 4,821 patterns trained<br>
+          <span id="learnStatus">Analyzing traffic baseline...</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CENTER TOP — Network Map -->
+    <div class="panel center-top">
+      <div class="scan-line"></div>
+      <div class="network-canvas-wrap">
+        <canvas id="netCanvas"></canvas>
+      </div>
+      <div class="net-overlay">
+        <div class="panel-title">LIVE NETWORK TOPOLOGY</div>
+      </div>
+    </div>
+
+    <!-- CENTER MID — Traffic -->
+    <div class="panel center-mid">
+      <div class="panel-title">NETWORK TRAFFIC ANALYSIS <span style="margin-left:8px;font-size:9px;color:var(--text-dim);font-family:'Share Tech Mono',monospace">LAST 30s</span></div>
+      <div class="traffic-chart" id="trafficChart"></div>
+    </div>
+
+    <!-- CENTER BOT — Alerts -->
+    <div class="panel center-bot">
+      <div class="panel-title">THREAT INTELLIGENCE FEED</div>
+      <div class="alert-feed" id="alertFeed"></div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="sidebar-right">
+
+      <!-- Protection Modules -->
+      <div class="panel">
+        <div class="panel-title">PROTECTION MODULES</div>
+        <div class="module-grid">
+          <div class="module-card on" onclick="toggleModule(this)">
+            <div class="toggle-btn"></div>
+            <span class="module-icon">🛡️</span>
+            <div class="module-name">FIREWALL</div>
+            <div class="module-status">ACTIVE</div>
+          </div>
+          <div class="module-card on" onclick="toggleModule(this)">
+            <div class="toggle-btn"></div>
+            <span class="module-icon">🔍</span>
+            <div class="module-name">DEEP INSPECT</div>
+            <div class="module-status">ACTIVE</div>
+          </div>
+          <div class="module-card on" onclick="toggleModule(this)">
+            <div class="toggle-btn"></div>
+            <span class="module-icon">🧠</span>
+            <div class="module-name">AI GUARD</div>
+            <div class="module-status">ACTIVE</div>
+          </div>
+          <div class="module-card warn-state" onclick="toggleModule(this)">
+            <div class="toggle-btn"></div>
+            <span class="module-icon">🔒</span>
+            <div class="module-name">ZERO TRUST</div>
+            <div class="module-status">LEARNING</div>
+          </div>
+          <div class="module-card on" onclick="toggleModule(this)">
+            <div class="toggle-btn"></div>
+            <span class="module-icon">📡</span>
+            <div class="module-name">IDS/IPS</div>
+            <div class="module-status">ACTIVE</div>
+          </div>
+          <div class="module-card" onclick="toggleModule(this)">
+            <div class="toggle-btn"></div>
+            <span class="module-icon">🌐</span>
+            <div class="module-name">GEO BLOCK</div>
+            <div class="module-status">STANDBY</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Connections -->
+      <div class="panel">
+        <div class="panel-title">ACTIVE CONNECTIONS</div>
+        <table class="conn-table">
+          <thead>
+            <tr>
+              <th>IP ADDRESS</th>
+              <th>PORT</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="connTable"></tbody>
+        </table>
+      </div>
+
+      <!-- Geo Attacks -->
+      <div class="geo-panel">
+        <div class="panel-title">GEO THREAT MAP</div>
+        <div class="geo-dots" id="geoMap">
+          <!-- Attack dots injected by JS -->
+          <div class="source-dot" style="left:38%;top:40%;"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text-dim);font-family:'Share Tech Mono',monospace;line-height:1.8;">
+          <span style="color:var(--danger)">● </span>INBOUND ATTACKS &nbsp;
+          <span style="color:var(--accent2)">● </span>YOUR NETWORK
+        </div>
+      </div>
+
+      <!-- AI Security Assistant -->
+      <div class="ai-chat-panel">
+        <div class="panel-title">AI SECURITY ASSISTANT</div>
+        <div class="ai-chat-history" id="chatHistory"></div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInput" placeholder="Ask AEGIS..." onkeydown="if(event.key==='Enter') sendChat()">
+          <button class="chat-send" onclick="sendChat()">SEND</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  AEGIS — Cybersecurity Dashboard Logic
+// ============================================================
+
+// --- Clock ---
+function updateClock() {
+  const now = new Date();
+  document.getElementById('liveTime').textContent =
+    now.toTimeString().slice(0,8);
+}
+setInterval(updateClock, 1000); updateClock();
+
+// --- Counters ---
+let blocked = 0, anomalies = 0, cleared = 0, packets = 0;
+let targetPackets = 4200;
+
+function animCounter(el, target, duration=800) {
+  const start = parseInt(el.textContent.replace(',','')) || 0;
+  const diff = target - start;
+  const steps = 20;
+  let step = 0;
+  const t = setInterval(() => {
+    step++;
+    el.textContent = Math.round(start + (diff * step / steps)).toLocaleString();
+    if (step >= steps) clearInterval(t);
+  }, duration / steps);
+}
+
+function bumpCounters() {
+  if (Math.random() < 0.3) { blocked++; animCounter(document.getElementById('cntBlocked'), blocked, 300); }
+  if (Math.random() < 0.15) { anomalies++; animCounter(document.getElementById('cntAnomaly'), anomalies, 300); }
+  if (Math.random() < 0.4) { cleared++; animCounter(document.getElementById('cntClear'), cleared, 300); }
+  targetPackets = 3000 + Math.floor(Math.random() * 3000);
+  animCounter(document.getElementById('cntPackets'), targetPackets, 800);
+}
+setInterval(bumpCounters, 2000);
+
+// --- Network Canvas ---
+const canvas = document.getElementById('netCanvas');
+const ctx = canvas.getContext('2d');
+
+let nodes = [];
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function makeNodes() {
+  nodes = [];
+  const W = canvas.width, H = canvas.height;
+  // Core node
+  nodes.push({ x: W/2, y: H/2, r: 18, type: 'core', label: 'CORE', pulse: 0 });
+  // Router nodes
+  const ring1 = 5;
+  for (let i = 0; i < ring1; i++) {
+    const a = (i / ring1) * Math.PI * 2;
+    nodes.push({
+      x: W/2 + Math.cos(a) * 90,
+      y: H/2 + Math.sin(a) * 75,
+      r: 11, type: 'router', label: 'RTR', pulse: Math.random() * Math.PI * 2
+    });
+  }
+  // Endpoint nodes
+  const ring2 = 12;
+  for (let i = 0; i < ring2; i++) {
+    const a = (i / ring2) * Math.PI * 2;
+    const threat = Math.random() < 0.1 ? 'threat' : (Math.random() < 0.15 ? 'warn' : 'safe');
+    nodes.push({
+      x: W/2 + Math.cos(a) * 160 + (Math.random()-0.5)*30,
+      y: H/2 + Math.sin(a) * 130 + (Math.random()-0.5)*30,
+      r: 7, type: 'endpoint', threat, pulse: Math.random() * Math.PI * 2
+    });
+  }
+}
+makeNodes();
+
+function spawnParticle(from, to, color='#00d4ff') {
+  particles.push({ from, to, progress: 0, color, speed: 0.02 + Math.random() * 0.03 });
+}
+
+function drawNet(t) {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw connections
+  nodes.forEach((n, i) => {
+    if (n.type === 'endpoint') {
+      // Connect to nearest router
+      let closest = null, dist = Infinity;
+      nodes.forEach((m, j) => {
+        if (m.type === 'router') {
+          const d = Math.hypot(n.x - m.x, n.y - m.y);
+          if (d < dist) { dist = d; closest = j; }
+        }
+      });
+      if (closest !== null) {
+        const m = nodes[closest];
+        ctx.beginPath();
+        ctx.moveTo(n.x, n.y);
+        ctx.lineTo(m.x, m.y);
+        const alpha = n.threat === 'threat' ? 0.6 : 0.25;
+        const color = n.threat === 'threat' ? '#ff3b30' : n.threat === 'warn' ? '#ff9f0a' : '#0e7a9a';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = n.threat === 'threat' ? 1.5 : 0.7;
+        ctx.globalAlpha = alpha;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+    }
+    if (n.type === 'router') {
+      // Connect to core
+      const core = nodes[0];
+      ctx.beginPath();
+      ctx.moveTo(n.x, n.y);
+      ctx.lineTo(core.x, core.y);
+      ctx.strokeStyle = '#00d4ff';
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.35;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  });
+
+  // Draw particles
+  particles = particles.filter(p => p.progress < 1);
+  particles.forEach(p => {
+    p.progress += p.speed;
+    const from = nodes[p.from], to = nodes[p.to];
+    if (!from || !to) return;
+    const x = from.x + (to.x - from.x) * p.progress;
+    const y = from.y + (to.y - from.y) * p.progress;
+    ctx.beginPath();
+    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  // Draw nodes
+  nodes.forEach(n => {
+    n.pulse += 0.05;
+    const pulseFactor = Math.sin(n.pulse) * 0.3 + 1;
+
+    let color = '#00d4ff';
+    if (n.type === 'core') color = '#00ff9d';
+    else if (n.type === 'endpoint') {
+      color = n.threat === 'threat' ? '#ff3b30' : n.threat === 'warn' ? '#ff9f0a' : '#00d4ff';
+    }
+
+    // Glow ring
+    if (n.type === 'core' || n.threat === 'threat') {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r * pulseFactor + 6, 0, Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.2 + Math.sin(n.pulse) * 0.1;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    // Node body
+    const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+    grad.addColorStop(0, color + 'cc');
+    grad.addColorStop(1, color + '22');
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Border
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+}
+
+// Spawn particles occasionally
+setInterval(() => {
+  const routers = nodes.filter((_,i) => nodes[i].type === 'router').map((_,i) => i + 1);
+  const endpoints = nodes.filter((_,i) => nodes[i].type === 'endpoint').map((_,i) => i + 1 + 5);
+
+  if (Math.random() < 0.5 && routers.length) {
+    spawnParticle(0, routers[Math.floor(Math.random()*routers.length)], '#00d4ff');
+  }
+  if (Math.random() < 0.3) {
+    const src = nodes.findIndex(n => n.threat === 'threat');
+    if (src > -1) spawnParticle(src, 0, '#ff3b30');
+  }
+}, 400);
+
+function animNet() {
+  drawNet(Date.now());
+  requestAnimationFrame(animNet);
+}
+animNet();
+
+// --- Traffic Chart ---
+const trafficData = [];
+for (let i = 0; i < 30; i++) trafficData.push({ v: Math.floor(Math.random() * 80) + 20, type: 'normal' });
+
+function renderTrafficChart() {
+  const chart = document.getElementById('trafficChart');
+  chart.innerHTML = '';
+  trafficData.forEach((d, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'traffic-bar-wrap';
+    const bar = document.createElement('div');
+    bar.className = 'traffic-bar ' + d.type;
+    bar.style.height = d.v + '%';
+    const lbl = document.createElement('div');
+    lbl.className = 'traffic-label';
+    lbl.textContent = i % 5 === 0 ? (30 - i) + 's' : '';
+    wrap.appendChild(bar);
+    wrap.appendChild(lbl);
+    chart.appendChild(wrap);
+  });
+}
+renderTrafficChart();
+
+setInterval(() => {
+  const v = Math.floor(Math.random() * 80) + 20;
+  const spike = Math.random() < 0.08;
+  const warn = Math.random() < 0.1;
+  trafficData.shift();
+  trafficData.push({ v: spike ? Math.min(v + 60, 100) : v, type: spike ? 'anomaly' : warn ? 'warn' : 'normal' });
+  renderTrafficChart();
+}, 1000);
+
+// --- Alerts ---
+const alertTemplates = [
+  { type: 'critical', msg: 'Port scan detected from 192.168.1.104 — 847 ports in 2s', meta: 'SRC: 192.168.1.104 → DST: BROADCAST | TCP SYN', action: 'BLOCK' },
+  { type: 'warning', msg: 'Unusual outbound traffic spike on port 8443 — 3.2× baseline', meta: 'SRC: 10.0.0.22 → DST: 185.220.101.x | TLS', action: 'INSPECT' },
+  { type: 'critical', msg: 'Brute force SSH attempt — 234 failed logins from 203.0.113.5', meta: 'SRC: 203.0.113.5 → DST: 10.0.0.1:22 | SSH', action: 'BLOCK' },
+  { type: 'info', msg: 'AI model updated anomaly baseline — 12 new patterns learned', meta: 'MODEL: Behavior v4.2 | Confidence: 98.7%', action: 'VIEW' },
+  { type: 'warning', msg: 'DNS tunneling behavior suspected on endpoint EP-14', meta: 'SRC: 10.0.1.14 | DNS TXT records exceed 512B', action: 'QUARANTINE' },
+  { type: 'success', msg: 'Threat neutralized — Malicious C2 connection severed on EP-07', meta: 'Blocked: 198.51.100.42 | Auto-response activated', action: 'DETAILS' },
+  { type: 'critical', msg: 'Lateral movement detected — credential relay attack in progress', meta: 'SRC: 10.0.0.33 → 10.0.0.* | SMB NTLM relay', action: 'ISOLATE' },
+  { type: 'info', msg: 'Zero-day signature added: CVE-2025-1284 — patch available', meta: 'SEVERITY: HIGH | Affected: 3 endpoints', action: 'PATCH' },
+  { type: 'warning', msg: 'Anomalous login time: admin account accessed at 03:47 UTC', meta: 'USER: admin@local | GEO: unexpected region', action: 'VERIFY' },
+  { type: 'success', msg: 'AI blocked unknown malware — zero-day variant stopped at gateway', meta: 'HASH: 7a3f2d... | ML confidence: 99.2%', action: 'DETAILS' },
+];
+
+function pushAlert(alert) {
+  const feed = document.getElementById('alertFeed');
+  const el = document.createElement('div');
+  el.className = `alert-item ${alert.type}`;
+  el.innerHTML = `
+    <div class="alert-type">${alert.type.toUpperCase()}</div>
+    <div class="alert-body">
+      <div class="alert-msg">${alert.msg}</div>
+      <div class="alert-meta">${alert.meta}</div>
+    </div>
+    <div class="alert-action">${alert.action}</div>
+  `;
+  feed.insertBefore(el, feed.firstChild);
+  while (feed.children.length > 8) feed.removeChild(feed.lastChild);
+}
+
+// Initial alerts
+[3, 1, 5].forEach(i => pushAlert(alertTemplates[i]));
+
+setInterval(() => {
+  const a = alertTemplates[Math.floor(Math.random() * alertTemplates.length)];
+  pushAlert(a);
+}, 5000 + Math.random() * 3000);
+
+// --- Threat Score ---
+let threatScore = 12;
+function updateThreatScore() {
+  const delta = (Math.random() - 0.45) * 8;
+  threatScore = Math.max(5, Math.min(90, threatScore + delta));
+  const score = Math.round(threatScore);
+
+  document.getElementById('threatScore').textContent = score;
+  // Arc: circumference ~351.86, offset = 351.86 * (1 - score/100)
+  const offset = 351.86 * (1 - score / 100);
+  document.getElementById('threatArc').setAttribute('stroke-dashoffset', 351.86 - offset + 10);
+
+  let color, status, desc;
+  if (score < 25) { color = '#00ff9d'; status = 'SECURE'; desc = 'Network operating normally'; }
+  else if (score < 50) { color = '#00d4ff'; status = 'GUARDED'; desc = 'Minor anomalies detected'; }
+  else if (score < 70) { color = '#ff9f0a'; status = 'ELEVATED'; desc = 'Active threats being analyzed'; }
+  else { color = '#ff3b30'; status = 'CRITICAL'; desc = 'Immediate action required!'; }
+
+  document.getElementById('threatArc').style.stroke = color;
+  document.getElementById('threatArc').style.filter = `drop-shadow(0 0 6px ${color})`;
+  document.getElementById('threatScore').style.color = color;
+  document.getElementById('threatScore').style.textShadow = `0 0 20px ${color}`;
+  document.getElementById('threatStatusTxt').style.color = color;
+  document.getElementById('threatStatusTxt').textContent = status;
+  document.getElementById('threatDescTxt').textContent = desc;
+}
+setInterval(updateThreatScore, 3000);
+
+// --- AI Learning bars ---
+function updateLearnBars() {
+  const bars = [
+    { id: 'lb1', fill: 'lbFill1', base: 92, range: 5 },
+    { id: 'lb2', fill: 'lbFill2', base: 85, range: 8 },
+    { id: 'lb3', fill: 'lbFill3', base: 77, range: 10 },
+    { id: 'lb4', fill: 'lbFill4', base: 94, range: 4 },
+  ];
+  bars.forEach(b => {
+    const val = b.base + Math.floor(Math.random() * b.range);
+    document.getElementById(b.id).textContent = val + '%';
+    document.getElementById(b.fill).style.width = val + '%';
+  });
+
+  const statuses = [
+    'Analyzing traffic baseline...', 'Learning new attack patterns...',
+    'Updating threat signatures...', 'Calibrating anomaly thresholds...',
+    'Processing network events...', 'Comparing against known CVEs...',
+    'Training on new endpoints...'
+  ];
+  document.getElementById('learnStatus').textContent =
+    statuses[Math.floor(Math.random() * statuses.length)];
+}
+setInterval(updateLearnBars, 4000);
+
+// --- Network Stats ---
+function updateStats() {
+  const inMB = (1 + Math.random() * 4).toFixed(1);
+  const outMB = (0.3 + Math.random() * 2).toFixed(1);
+  document.getElementById('statIn').textContent = inMB + ' MB/s';
+  document.getElementById('statOut').textContent = outMB + ' MB/s';
+  document.getElementById('statConn').textContent = Math.floor(35 + Math.random() * 30);
+  document.getElementById('statBlockedIP').textContent = Math.floor(10 + Math.random() * 10);
+  const ep = Math.floor(22 + Math.random() * 3);
+  document.getElementById('statEndpoints').textContent = ep + '/24';
+  document.getElementById('statAcc').textContent = (97 + Math.random() * 2).toFixed(1) + '%';
+}
+setInterval(updateStats, 3000);
+
+// --- Connection Table ---
+const connData = [
+  { ip: '10.0.0.22', port: '443', status: 'safe' },
+  { ip: '10.0.1.14', port: '8443', status: 'suspicious' },
+  { ip: '192.168.1.1', port: '22', status: 'safe' },
+  { ip: '203.0.113.5', port: '22', status: 'blocked' },
+  { ip: '10.0.0.33', port: '445', status: 'suspicious' },
+  { ip: '10.0.0.7', port: '80', status: 'safe' },
+  { ip: '185.220.101.4', port: '443', status: 'blocked' },
+];
+
+function renderConnTable() {
+  const tbody = document.getElementById('connTable');
+  tbody.innerHTML = '';
+  connData.slice(0, 7).forEach(c => {
+    const tr = document.createElement('tr');
+    const statusLabel = c.status === 'safe' ? 'SAFE' : c.status === 'suspicious' ? 'WARN' : 'BLOCKED';
+    const statusColor = c.status === 'safe' ? '#00ff9d' : c.status === 'suspicious' ? '#ff9f0a' : '#ff3b30';
+    tr.innerHTML = `
+      <td><span class="conn-flag ${c.status}"></span>${c.ip}</td>
+      <td>${c.port}</td>
+      <td style="color:${statusColor};font-family:'Orbitron',monospace;font-size:9px;font-weight:700">${statusLabel}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+renderConnTable();
+
+setInterval(() => {
+  if (Math.random() < 0.3) {
+    connData[Math.floor(Math.random() * connData.length)].status =
+      Math.random() < 0.6 ? 'safe' : Math.random() < 0.5 ? 'suspicious' : 'blocked';
+    renderConnTable();
+  }
+}, 3000);
+
+// --- Geo Map ---
+const geoPositions = [
+  { l: '15%', t: '30%' }, { l: '72%', t: '20%' }, { l: '80%', t: '55%' },
+  { l: '25%', t: '60%' }, { l: '60%', t: '35%' }, { l: '50%', t: '70%' },
+  { l: '10%', t: '55%' }, { l: '88%', t: '35%' },
+];
+
+function renderGeoMap() {
+  const map = document.getElementById('geoMap');
+  map.innerHTML = '<div class="source-dot" style="left:38%;top:40%;"></div>';
+  geoPositions.forEach(pos => {
+    if (Math.random() < 0.7) {
+      const dot = document.createElement('div');
+      dot.className = 'attack-dot';
+      dot.style.left = pos.l;
+      dot.style.top = pos.t;
+      dot.style.animationDelay = Math.random() * 2 + 's';
+      map.appendChild(dot);
+    }
+  });
+}
+renderGeoMap();
+setInterval(renderGeoMap, 5000);
+
+// --- Module Toggle ---
+function toggleModule(card) {
+  const wasOn = card.classList.contains('on');
+  const wasWarn = card.classList.contains('warn-state');
+
+  card.classList.remove('on', 'warn-state');
+  const statusEl = card.querySelector('.module-status');
+
+  if (wasOn || wasWarn) {
+    statusEl.textContent = 'STANDBY';
+  } else {
+    card.classList.add('on');
+    statusEl.textContent = 'ACTIVE';
+  }
+}
+
+// --- AI Security Chat ---
+const aiResponses = {
+  'scan': 'Port scan detected from 192.168.1.104 — 847 ports probed in 2 seconds. Attack pattern matches Nmap SYN scan. Recommendation: Apply block rule for /24 subnet. Auto-block has been queued.',
+  'threat': 'Current threat level: GUARDED (Score: 24/100). 3 active anomalies being monitored. No critical incidents in last 30 minutes. AI confidence is 98.7%.',
+  'block': 'Executing block rule for IP 203.0.113.5. Added to firewall deny list and updated GeoIP threat database. Action logged to SIEM.',
+  'anomaly': 'Detected 2 behavioral anomalies: (1) DNS tunneling on EP-14 — 4.3× normal TXT record size. (2) Outbound HTTPS to known C2 pattern on 185.220.101.4. Both are being monitored.',
+  'learn': 'AI model status: Behavior baseline 94% trained. Last 4,821 events processed. 12 new attack signatures added today. Zero-day detection model updated at 02:15 UTC.',
+  'status': 'All systems nominal. Firewall, IDS/IPS, and AI Guard are ACTIVE. 47 active connections, 13 IPs on blocklist. Network uptime: 99.98%. No critical alerts.',
+  'patch': 'Vulnerability scan complete. 3 endpoints require patching: CVE-2025-1284 (HIGH), CVE-2025-0891 (MEDIUM). Automated patch deployment available. Approve?',
+  'default': 'AEGIS AI is analyzing your query against current threat data. For immediate action, specify: BLOCK [ip], SCAN [network], STATUS, or ANOMALY report.'
+};
+
+function addChatMsg(text, role) {
+  const history = document.getElementById('chatHistory');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  if (role === 'ai') {
+    div.innerHTML = '<div class="ai-label">▸ AEGIS AI</div>' + text;
+  } else {
+    div.textContent = text;
+  }
+  history.appendChild(div);
+  history.scrollTop = history.scrollHeight;
+}
+
+function getAiResponse(msg) {
+  const lower = msg.toLowerCase();
+  for (const key of Object.keys(aiResponses)) {
+    if (key !== 'default' && lower.includes(key)) return aiResponses[key];
+  }
+  return aiResponses.default;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  addChatMsg(msg, 'user');
+
+  // Show typing
+  const typing = document.createElement('div');
+  typing.className = 'chat-msg ai';
+  typing.innerHTML = '<div class="ai-label">▸ AEGIS AI</div><div class="typing-dots"><span></span><span></span><span></span></div>';
+  document.getElementById('chatHistory').appendChild(typing);
+  document.getElementById('chatHistory').scrollTop = 99999;
+
+  // Try Claude API, fallback to local
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: "You are AEGIS, an AI-powered cybersecurity assistant embedded in a network security dashboard. Respond concisely (2-4 sentences) with technical precision. Use cybersecurity terminology. Reference network events, IPs, CVEs, and threat intelligence when relevant. Never break character.",
+        messages: [{ role: "user", content: msg }]
+      })
+    });
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text || getAiResponse(msg);
+    typing.innerHTML = '<div class="ai-label">▸ AEGIS AI</div>' + reply;
+  } catch {
+    await new Promise(r => setTimeout(r, 1200));
+    const reply = getAiResponse(msg);
+    typing.innerHTML = '<div class="ai-label">▸ AEGIS AI</div>' + reply;
+  }
+  document.getElementById('chatHistory').scrollTop = 99999;
+}
+
+// Initial AI message
+setTimeout(() => {
+  addChatMsg('AEGIS AI online. Network monitoring active. 47 endpoints under surveillance. Ask me about threats, anomalies, or network status.', 'ai');
+}, 1000);
+</script>
+</body>
+</html>
